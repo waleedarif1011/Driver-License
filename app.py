@@ -158,6 +158,12 @@ def build_ui() -> gr.Blocks:
     with gr.Blocks(title="Driver Qualification Predictor") as demo:
         gr.Markdown(
             "# Driver Qualification Predictor\n\n"
+            "**Synthetic data:** demo uses a 500-row stand-in CSV, not production DMV "
+            "records.\n\n"
+            "**Circularity note:** practical/theory scores largely define "
+            "`Qualified`, so full-model accuracy is an upper-bound demo. The more "
+            "honest framing is **pre-test signals** (demographics, training, "
+            "reactions) — see `pre_test_ablation` in `artifacts/metrics.json`.\n\n"
             "Enter candidate demographics, training, reactions, and test scores "
             "to estimate **qualification probability** with a LightGBM model.\n\n"
             + _metrics_blurb()

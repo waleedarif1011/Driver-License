@@ -39,6 +39,25 @@
     "Parking",
     "Theory Test"
   ],
+  "circular_score_features": [
+    "Signals",
+    "Yield",
+    "Speed Control",
+    "Night Drive",
+    "Road Signs",
+    "Steer Control",
+    "Mirror Usage",
+    "Confidence",
+    "Parking",
+    "Theory Test"
+  ],
+  "pre_test_features": [
+    "Gender",
+    "Age Group",
+    "Race",
+    "Training",
+    "Reactions"
+  ],
   "test_size": 0.2,
   "random_state": 42,
   "exported_model": "LightGBM",
@@ -77,6 +96,36 @@
       "roc_auc": 0.9508000000000001
     }
   ],
+  "pre_test_ablation": {
+    "description": "LightGBM using only pre-test signals (Gender, Age Group, Race, Training, Reactions); exam scores excluded.",
+    "features": [
+      "Gender_Male",
+      "Age Group_Teenager",
+      "Age Group_Young Adult",
+      "Race_Other",
+      "Race_White",
+      "Training_Basic",
+      "Reactions_Fast",
+      "Reactions_Slow"
+    ],
+    "n_features": 8,
+    "accuracy": 0.58,
+    "precision": 0.5909090909090909,
+    "recall": 0.52,
+    "f1": 0.5531914893617021,
+    "roc_auc": 0.6722,
+    "feature_importance": {
+      "Gender_Male": 267.0,
+      "Age Group_Teenager": 103.0,
+      "Age Group_Young Adult": 188.0,
+      "Race_Other": 215.0,
+      "Race_White": 219.0,
+      "Training_Basic": 100.0,
+      "Reactions_Fast": 94.0,
+      "Reactions_Slow": 83.0
+    },
+    "note": "Expect a large drop vs the full model: practical/theory scores near-define Qualified, so full-model metrics overstate operational value."
+  },
   "feature_importance": {
     "Signals": 209.0,
     "Yield": 109.0,
@@ -106,7 +155,7 @@
         "Gender": "Male",
         "Age Group": "Young Adult",
         "Race": "Other",
-        "Training": NaN,
+        "Training": "Basic",
         "Reactions": "Average",
         "Signals": 28.95,
         "Yield": 55.74,
@@ -150,7 +199,7 @@
         "Gender": "Female",
         "Age Group": "Middle Age",
         "Race": "Black",
-        "Training": NaN,
+        "Training": "Basic",
         "Reactions": "Average",
         "Signals": 57.34,
         "Yield": 57.01,
@@ -169,5 +218,10 @@
     "model": "artifacts/driver_lgbm.joblib",
     "roc_comparison": "assets/roc_comparison.png",
     "feature_importance": "assets/feature_importance.png"
+  },
+  "credibility_notes": {
+    "synthetic_data": true,
+    "circularity": "Full-model features include practical/theory scores that largely define Qualified; treat full ROC-AUC as an upper-bound demo, not an operational breakthrough.",
+    "preferred_framing": "Pre-test risk signals (demographics, training, reactions) via pre_test_ablation; scores retained for demo completeness only."
   }
 }

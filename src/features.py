@@ -21,6 +21,11 @@ CATEGORICAL_COLS: tuple[str, ...] = (
     "Reactions",
 )
 
+# Pre-test signals available before practical/theory exams.
+# Using score columns to predict Qualified is partly circular because those
+# same scores largely define the label.
+PRE_TEST_CATEGORICAL_COLS: tuple[str, ...] = CATEGORICAL_COLS
+
 NUMERIC_COLS: tuple[str, ...] = (
     "Signals",
     "Yield",
@@ -33,6 +38,10 @@ NUMERIC_COLS: tuple[str, ...] = (
     "Parking",
     "Theory Test",
 )
+
+# Exam-score columns that define (or near-define) qualification — circular if
+# used as the main story for an "applicant risk" model.
+CIRCULAR_SCORE_COLS: tuple[str, ...] = NUMERIC_COLS
 
 RAW_COLUMNS: tuple[str, ...] = (
     ID_COL,
@@ -96,8 +105,12 @@ def encode_features(
     df: pd.DataFrame,
     *,
     feature_columns: list[str] | None = None,
+    include_scores: bool = True,
 ) -> tuple[pd.DataFrame, pd.Series, list[str]]:
     """One-hot encode categoricals (``drop_first=True``) matching the notebook.
+
+    When ``include_scores`` is False, drops practical/theory score columns and
+    keeps only pre-test signals (demographics, training, reactions).
 
     Returns ``(X, y, feature_names)`` where ``y`` is binary ``Qualified_Yes``.
     """
@@ -106,6 +119,9 @@ def encode_features(
 
     y = (work[TARGET_COL].str.lower() == "yes").astype(int)
     work = work.drop(columns=[TARGET_COL])
+
+    if not include_scores:
+        work = work.drop(columns=list(NUMERIC_COLS), errors="ignore")
 
     encoded = pd.get_dummies(
         work,
@@ -129,9 +145,14 @@ def prepare_frame(
     path: str | Path = DEFAULT_DATA,
     *,
     feature_columns: list[str] | None = None,
+    include_scores: bool = True,
 ) -> tuple[pd.DataFrame, pd.Series, list[str]]:
     """Load → clean → encode for modeling."""
-    return encode_features(load_raw(path), feature_columns=feature_columns)
+    return encode_features(
+        load_raw(path),
+        feature_columns=feature_columns,
+        include_scores=include_scores,
+    )
 
 
 def raw_row_to_frame(features: dict[str, Any]) -> pd.DataFrame:

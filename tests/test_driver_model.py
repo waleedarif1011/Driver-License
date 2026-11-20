@@ -9,6 +9,7 @@ import pytest
 from src.features import (
     DEMO_FEATURES,
     NUMERIC_COLS,
+    PRE_TEST_CATEGORICAL_COLS,
     TARGET_COL,
     encode_features,
     load_raw,
@@ -71,6 +72,27 @@ def test_metrics_include_three_models(trained_metrics):
         assert 0.0 <= row["accuracy"] <= 1.0
         assert 0.0 <= row["roc_auc"] <= 1.0
     assert trained_metrics["exported_model"] == "LightGBM"
+
+
+def test_pre_test_ablation_recorded(trained_metrics):
+    abl = trained_metrics["pre_test_ablation"]
+    assert abl["n_features"] >= 1
+    assert 0.0 <= abl["roc_auc"] <= 1.0
+    assert 0.0 <= abl["f1"] <= 1.0
+    # Pre-test-only model should not beat the circular full model on ROC-AUC.
+    full_auc = trained_metrics["best"]["roc_auc"]
+    assert abl["roc_auc"] <= full_auc + 1e-9
+    assert trained_metrics["pre_test_features"] == list(PRE_TEST_CATEGORICAL_COLS)
+    assert trained_metrics["credibility_notes"]["synthetic_data"] is True
+
+
+def test_prepare_frame_pre_test_excludes_scores():
+    X, y, features = prepare_frame(include_scores=False)
+    assert len(y) == len(X)
+    for col in NUMERIC_COLS:
+        assert col not in features
+    assert X.shape[1] == len(features)
+    assert X.isna().sum().sum() == 0
 
 
 def test_model_file_loads(artifact):
