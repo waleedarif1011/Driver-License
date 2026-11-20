@@ -27,6 +27,7 @@ from sklearn.model_selection import train_test_split
 from src.features import (
     DEMO_FEATURES,
     NUMERIC_COLS,
+    PRE_TEST_CATEGORICAL_COLS,
     TARGET_COL,
     feature_defaults,
     load_raw,
@@ -143,6 +144,9 @@ def _pick_presets(
     test_index: np.ndarray,
 ) -> list[dict[str, Any]]:
     """Three held-out candidates: low / mid / high predicted qualification prob."""
+    from src.features import clean_raw
+
+    cleaned = clean_raw(raw)
     X_test = X.loc[test_index]
     probs = np.asarray(model.predict_proba(X_test)[:, 1], dtype=float)
     order = np.argsort(probs)
@@ -155,10 +159,12 @@ def _pick_presets(
     presets: list[dict[str, Any]] = []
     for label, pos in zip(labels, positions):
         idx = test_index[pos]
-        row = raw.loc[idx]
+        row = cleaned.loc[idx]
         values = {c: row[c] for c in DEMO_FEATURES}
         for col in NUMERIC_COLS:
             values[col] = float(values[col])
+        for col in ("Gender", "Age Group", "Race", "Training", "Reactions"):
+            values[col] = str(values[col])
         presets.append(
             {
                 "label": label,
@@ -168,6 +174,48 @@ def _pick_presets(
             }
         )
     return presets
+
+
+def _pre_test_ablation(
+    path: Path | None,
+    *,
+    test_size: float,
+    random_state: int,
+) -> dict[str, Any]:
+    """LightGBM on demographics / training / reactions only (no exam scores).
+
+    Documents how much lift comes from circular score features vs pre-test signals.
+    """
+    X_pt, y_pt, feature_names = (
+        prepare_frame(path, include_scores=False)
+        if path is not None
+        else prepare_frame(include_scores=False)
+    )
+    y_arr = y_pt.to_numpy(dtype=int)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_pt, y_arr, test_size=test_size, random_state=random_state, stratify=y_arr
+    )
+    model = lgb.LGBMClassifier(random_state=random_state, verbose=-1)
+    row = _evaluate("LightGBM_pre_test", model, X_train, y_train, X_test, y_test)
+    importances = _feature_importance(row["model"], feature_names)
+    return {
+        "description": (
+            "LightGBM using only pre-test signals "
+            f"({', '.join(PRE_TEST_CATEGORICAL_COLS)}); exam scores excluded."
+        ),
+        "features": feature_names,
+        "n_features": len(feature_names),
+        "accuracy": row["accuracy"],
+        "precision": row["precision"],
+        "recall": row["recall"],
+        "f1": row["f1"],
+        "roc_auc": row["roc_auc"],
+        "feature_importance": importances,
+        "note": (
+            "Expect a large drop vs the full model: practical/theory scores "
+            "near-define Qualified, so full-model metrics overstate operational value."
+        ),
+    }
 
 
 def train(
@@ -200,6 +248,10 @@ def train(
     test_index = X_test.index.to_numpy()
     presets = _pick_presets(raw, X, export_model, test_index)
 
+    ablation = _pre_test_ablation(
+        path, test_size=test_size, random_state=random_state
+    )
+
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
     ASSETS.mkdir(parents=True, exist_ok=True)
 
@@ -213,6 +265,12 @@ def train(
         "feature_defaults": defaults,
         "presets": presets,
         "best_benchmark_model": best["name"],
+        "pre_test_ablation": {
+            "features": ablation["features"],
+            "roc_auc": ablation["roc_auc"],
+            "f1": ablation["f1"],
+            "accuracy": ablation["accuracy"],
+        },
     }
     joblib.dump(artifact, MODEL_PATH)
 
@@ -236,6 +294,8 @@ def train(
         "n_test": int(len(X_test)),
         "features": feature_names,
         "demo_features": list(DEMO_FEATURES),
+        "circular_score_features": list(NUMERIC_COLS),
+        "pre_test_features": list(PRE_TEST_CATEGORICAL_COLS),
         "test_size": test_size,
         "random_state": random_state,
         "exported_model": export_row["name"],
@@ -249,6 +309,7 @@ def train(
             "roc_auc": export_row["roc_auc"],
         },
         "models": summary_rows,
+        "pre_test_ablation": ablation,
         "feature_importance": importances,
         "presets": [
             {
@@ -263,6 +324,18 @@ def train(
             "model": str(MODEL_PATH.relative_to(ROOT)),
             "roc_comparison": str(ROC_PATH.relative_to(ROOT)),
             "feature_importance": str(IMPORTANCE_PATH.relative_to(ROOT)),
+        },
+        "credibility_notes": {
+            "synthetic_data": True,
+            "circularity": (
+                "Full-model features include practical/theory scores that largely "
+                "define Qualified; treat full ROC-AUC as an upper-bound demo, not "
+                "an operational breakthrough."
+            ),
+            "preferred_framing": (
+                "Pre-test risk signals (demographics, training, reactions) via "
+                "pre_test_ablation; scores retained for demo completeness only."
+            ),
         },
     }
     METRICS_PATH.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
@@ -283,6 +356,12 @@ def main() -> None:
             f"  {m['name']}: Acc={m['accuracy']:.4f} "
             f"F1={m['f1']:.4f} ROC-AUC={m['roc_auc']:.4f}"
         )
+    abl = metrics["pre_test_ablation"]
+    print(
+        f"  Pre-test ablation (LightGBM, no exam scores): "
+        f"Acc={abl['accuracy']:.4f} F1={abl['f1']:.4f} "
+        f"ROC-AUC={abl['roc_auc']:.4f}"
+    )
 
 
 if __name__ == "__main__":
