@@ -1,0 +1,173 @@
+{
+  "n_samples": 500,
+  "n_train": 400,
+  "n_test": 100,
+  "features": [
+    "Signals",
+    "Yield",
+    "Speed Control",
+    "Night Drive",
+    "Road Signs",
+    "Steer Control",
+    "Mirror Usage",
+    "Confidence",
+    "Parking",
+    "Theory Test",
+    "Gender_Male",
+    "Age Group_Teenager",
+    "Age Group_Young Adult",
+    "Race_Other",
+    "Race_White",
+    "Training_Basic",
+    "Reactions_Fast",
+    "Reactions_Slow"
+  ],
+  "demo_features": [
+    "Gender",
+    "Age Group",
+    "Race",
+    "Training",
+    "Reactions",
+    "Signals",
+    "Yield",
+    "Speed Control",
+    "Night Drive",
+    "Road Signs",
+    "Steer Control",
+    "Mirror Usage",
+    "Confidence",
+    "Parking",
+    "Theory Test"
+  ],
+  "test_size": 0.2,
+  "random_state": 42,
+  "exported_model": "LightGBM",
+  "best_benchmark_model": "LightGBM",
+  "best": {
+    "name": "LightGBM",
+    "accuracy": 0.89,
+    "precision": 0.9148936170212766,
+    "recall": 0.86,
+    "f1": 0.8865979381443299,
+    "roc_auc": 0.9508000000000001
+  },
+  "models": [
+    {
+      "name": "LogisticRegression",
+      "accuracy": 0.82,
+      "precision": 0.8076923076923077,
+      "recall": 0.84,
+      "f1": 0.8235294117647058,
+      "roc_auc": 0.9072
+    },
+    {
+      "name": "RandomForest",
+      "accuracy": 0.88,
+      "precision": 0.8958333333333334,
+      "recall": 0.86,
+      "f1": 0.8775510204081632,
+      "roc_auc": 0.9508
+    },
+    {
+      "name": "LightGBM",
+      "accuracy": 0.89,
+      "precision": 0.9148936170212766,
+      "recall": 0.86,
+      "f1": 0.8865979381443299,
+      "roc_auc": 0.9508000000000001
+    }
+  ],
+  "feature_importance": {
+    "Signals": 209.0,
+    "Yield": 109.0,
+    "Speed Control": 121.0,
+    "Night Drive": 101.0,
+    "Road Signs": 97.0,
+    "Steer Control": 186.0,
+    "Mirror Usage": 72.0,
+    "Confidence": 113.0,
+    "Parking": 100.0,
+    "Theory Test": 265.0,
+    "Gender_Male": 10.0,
+    "Age Group_Teenager": 9.0,
+    "Age Group_Young Adult": 10.0,
+    "Race_Other": 12.0,
+    "Race_White": 2.0,
+    "Training_Basic": 44.0,
+    "Reactions_Fast": 83.0,
+    "Reactions_Slow": 31.0
+  },
+  "presets": [
+    {
+      "label": "Borderline / not ready",
+      "actual_qualified": 0,
+      "predicted_probability": 7.326634303960826e-05,
+      "demo_values": {
+        "Gender": "Male",
+        "Age Group": "Young Adult",
+        "Race": "Other",
+        "Training": NaN,
+        "Reactions": "Average",
+        "Signals": 28.95,
+        "Yield": 55.74,
+        "Speed Control": 31.67,
+        "Night Drive": 47.05,
+        "Road Signs": 39.59,
+        "Steer Control": 30.47,
+        "Mirror Usage": 59.31,
+        "Confidence": 29.51,
+        "Parking": 49.33,
+        "Theory Test": 40.0
+      }
+    },
+    {
+      "label": "Average candidate",
+      "actual_qualified": 0,
+      "predicted_probability": 0.39736499269080316,
+      "demo_values": {
+        "Gender": "Female",
+        "Age Group": "Young Adult",
+        "Race": "Black",
+        "Training": "Basic",
+        "Reactions": "Average",
+        "Signals": 61.21,
+        "Yield": 37.01,
+        "Speed Control": 50.76,
+        "Night Drive": 39.61,
+        "Road Signs": 45.44,
+        "Steer Control": 68.15,
+        "Mirror Usage": 44.03,
+        "Confidence": 39.13,
+        "Parking": 47.64,
+        "Theory Test": 67.56
+      }
+    },
+    {
+      "label": "Strong candidate",
+      "actual_qualified": 1,
+      "predicted_probability": 0.9998329905850021,
+      "demo_values": {
+        "Gender": "Female",
+        "Age Group": "Middle Age",
+        "Race": "Black",
+        "Training": NaN,
+        "Reactions": "Average",
+        "Signals": 57.34,
+        "Yield": 57.01,
+        "Speed Control": 44.99,
+        "Night Drive": 40.84,
+        "Road Signs": 52.44,
+        "Steer Control": 60.2,
+        "Mirror Usage": 57.66,
+        "Confidence": 73.77,
+        "Parking": 43.7,
+        "Theory Test": 100.0
+      }
+    }
+  ],
+  "artifacts": {
+    "model": "artifacts/driver_lgbm.joblib",
+    "roc_comparison": "assets/roc_comparison.png",
+    "feature_importance": "assets/feature_importance.png"
+  }
+}
